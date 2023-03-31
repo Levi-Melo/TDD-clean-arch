@@ -23,18 +23,18 @@ export class PgUser {
   @Column({ nullable: true, name: 'id_facebook' })
     facebookId?: string
 }
-
 describe('PgUserAccountRepository', () => {
+  let connection: any
   describe('load', () => {
-    it('should return an account if email exists ', async () => {
+    beforeAll(async () => {
       const db = newDb()
-      const connection = await db.adapters.createTypeormConnection({
+      connection = await db.adapters.createTypeormConnection({
         type: 'postgres',
         entities: [PgUser]
       })
-      // create schema
       await connection.synchronize()
-
+    })
+    it('should return an account if email exists ', async () => {
       const PgUserRepo = getRepository(PgUser)
       await PgUserRepo.save({ email: 'existing_email' })
 
@@ -42,6 +42,13 @@ describe('PgUserAccountRepository', () => {
       const account = await sut.load({ email: 'existing_email' })
 
       expect(account).toEqual({ id: '1' })
+    })
+
+    it('should return undefined if email not exists ', async () => {
+      const sut = new PgUserAccountRepository()
+      const account = await sut.load({ email: 'new_email' })
+
+      expect(account).toBeUndefined()
     })
   })
 })
