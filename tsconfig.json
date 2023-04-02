@@ -2,7 +2,6 @@
   "include": ["src", "tests"],
   "compilerOptions": {
     "target": "ES2021",
-    "rootDir": "src" /* Specify the root folder within your source files. */,
     "module": "commonjs",
     "sourceMap": true,
     "esModuleInterop": true /* Emit additional JavaScript to ease support for importing CommonJS modules. This enables 'allowSyntheticDefaultImports' for type compatibility. */,
