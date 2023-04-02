@@ -1,46 +1,31 @@
-import { LoadUserAccountRepository } from '@/data/contracts/repos'
-import { IBackup, newDb } from 'pg-mem'
-import { Entity, PrimaryGeneratedColumn, Column, getRepository, Repository } from 'typeorm'
-class PgUserAccountRepository implements LoadUserAccountRepository {
-  async load ({ email }: LoadUserAccountRepository.Params): Promise<LoadUserAccountRepository.Result> {
-    const pgUserRepo = getRepository(PgUser)
-    const pgUser = await pgUserRepo.findOne({ where: { email } })
-    if (pgUser != null) { return { id: pgUser.id.toString(), name: pgUser.name ?? undefined } }
-  }
+import { PgUser } from '@/infra/postgres/entities'
+import { PgUserAccountRepository } from '@/infra/postgres/repos'
+import { IBackup, IMemoryDb, newDb } from 'pg-mem'
+import { getConnection, getRepository, Repository } from 'typeorm'
+
+const makeFakeDb = async (entities?: any[]): Promise<IMemoryDb> => {
+  const db = newDb()
+  const connection = await db.adapters.createTypeormConnection({
+    type: 'postgres',
+    entities: entities ?? ['src/infra/postgres/entities/index.ts']
+  })
+  await connection.synchronize()
+  return db
 }
 
-@Entity('usuarios')
-export class PgUser {
-  @PrimaryGeneratedColumn()
-    id!: number
-
-  @Column({ nullable: true, name: 'nome' })
-    name?: string
-
-  @Column()
-    email!: string
-
-  @Column({ nullable: true, name: 'id_facebook' })
-    facebookId?: string
-}
 describe('PgUserAccountRepository', () => {
   describe('load', () => {
-    let connection: any
     let pgUserRepo: Repository<PgUser>
     let backup: IBackup
     let sut: PgUserAccountRepository
+
     beforeAll(async () => {
-      const db = newDb()
-      connection = await db.adapters.createTypeormConnection({
-        type: 'postgres',
-        entities: [PgUser]
-      })
-      await connection.synchronize()
+      const db = await makeFakeDb()
       backup = db.backup()
       pgUserRepo = getRepository(PgUser)
     })
     afterAll(async () => {
-      await connection.close()
+      await getConnection().close()
     })
 
     beforeEach(() => {
