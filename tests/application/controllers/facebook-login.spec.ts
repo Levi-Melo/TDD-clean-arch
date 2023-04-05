@@ -6,19 +6,33 @@ import { MockProxy, mock } from 'jest-mock-extended'
 class FacebookLoginController {
   constructor (private readonly facebookAuthentication: FacebookAuthentication) {}
   async handle (params: any): Promise<HttpResponse> {
-    if (['', null, undefined].includes(params.token)) { return { statusCode: 400, data: new Error() } }
+    try {
+      if (['', null, undefined].includes(params.token)) { return { statusCode: 400, data: new Error() } }
 
-    const result = await this.facebookAuthentication.perform({ token: params.token })
-    if (result instanceof AccessToken) {
+      const result = await this.facebookAuthentication.perform({ token: params.token })
+      if (result instanceof AccessToken) {
+        return {
+          statusCode: 200,
+          data: { accessToken: result.value }
+        }
+      }
       return {
-        statusCode: 200,
-        data: { accessToken: result.value }
+        statusCode: 401,
+        data: new AuthenticationError()
+      }
+    } catch (error: any) {
+      return {
+        statusCode: 500,
+        data: new ServerError(error)
       }
     }
-    return {
-      statusCode: 401,
-      data: new AuthenticationError()
-    }
+  }
+}
+class ServerError extends Error {
+  constructor (error?: Error) {
+    super('Server failed. Try again soon')
+    this.name = 'ServerError'
+    this.stack = error?.stack
   }
 }
 type HttpResponse = { statusCode: number, data: any }
@@ -72,5 +86,13 @@ describe('Name of the group', () => {
     const httpHandle = await sut.handle({ token: 'any_token' })
 
     expect(httpHandle).toEqual({ statusCode: 200, data: { accessToken: 'any_value' } })
+  })
+
+  it('should return 500 if authentication throws', async () => {
+    const err = new Error('infra_error')
+    facebookAuth.perform.mockRejectedValueOnce(err)
+    const httpHandle = await sut.handle({ token: 'any_token' })
+
+    expect(httpHandle).toEqual({ statusCode: 500, data: new ServerError(err) })
   })
 })
