@@ -1,5 +1,5 @@
 import { FacebookLoginController } from '@/application/controllers'
-import { RequiredFieldError, ServerError } from '@/application/errors'
+import { RequiredFieldError, ServerError, UnauthorizedError } from '@/application/errors'
 import { AuthenticationError } from '@/domain/errors'
 import { FacebookAuthentication } from '@/domain/features'
 import { AccessToken } from '@/domain/models'
@@ -47,7 +47,7 @@ describe('Name of the group', () => {
     facebookAuth.perform.mockResolvedValueOnce(new AuthenticationError())
     const httpHandle = await sut.handle({ token: 'any_token' })
 
-    expect(httpHandle).toEqual({ statusCode: 401, data: new AuthenticationError() })
+    expect(httpHandle).toEqual({ statusCode: 401, data: new UnauthorizedError() })
   })
 
   it('should return 200 if authentication suceeds', async () => {
