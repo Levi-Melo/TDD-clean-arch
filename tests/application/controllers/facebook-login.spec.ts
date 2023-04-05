@@ -1,5 +1,5 @@
 import { FacebookLoginController } from '@/application/controllers'
-import { ServerError } from '@/application/errors'
+import { RequiredFieldError, ServerError } from '@/application/errors'
 import { AuthenticationError } from '@/domain/errors'
 import { FacebookAuthentication } from '@/domain/features'
 import { AccessToken } from '@/domain/models'
@@ -21,19 +21,19 @@ describe('Name of the group', () => {
   it('should return 400 if token is empty', async () => {
     const httpHandle = await sut.handle({ token: '' })
 
-    expect(httpHandle).toEqual({ statusCode: 400, data: new Error() })
+    expect(httpHandle).toEqual({ statusCode: 400, data: new RequiredFieldError('token') })
   })
 
   it('should return 400 if token is null', async () => {
     const httpHandle = await sut.handle({ token: null })
 
-    expect(httpHandle).toEqual({ statusCode: 400, data: new Error() })
+    expect(httpHandle).toEqual({ statusCode: 400, data: new RequiredFieldError('token') })
   })
 
   it('should return 400 if token is null', async () => {
     const httpHandle = await sut.handle({ token: undefined })
 
-    expect(httpHandle).toEqual({ statusCode: 400, data: new Error() })
+    expect(httpHandle).toEqual({ statusCode: 400, data: new RequiredFieldError('token') })
   })
 
   it('should call FacebookAuthentication with correct params', async () => {
